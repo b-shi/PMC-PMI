@@ -1,78 +1,7 @@
+
 #pragma once
 
-/**************************************************************************************************
- **************************************************************************************************
- * * COUNTER EVENTS, UMASK, CMASK, and INV codes
- **************************************************************************************************
- ***************************************************************************************************/
-
-/**
- * These are the event/umask/cmask/inv values
- * to specify the event to count
- * refer to Intel SDM Ch. 18
- *
- * The events, umask, cmask, and inv are stored as an array of ints.
- * { CMASK, [INV]1001110, UMASK, EVENT_SEL } -> [CMASK][0x42,0xC2][UMASK][EVENT_SEL]
- * For INV=1 set use 0xC2 instead of 0x42
- *
- * The events below are ones I have used.
- *
- * Note: Probably a better way of doing this but.....
- */
-
-#define INST_RETIRED_ANY_P                                  {0x00, 0x42, 0x00, 0xc0}
-#define MEM_LOAD_RETIRED_L1_HIT                             {0x00, 0x42, 0x01, 0xd1}
-#define MEM_LOAD_RETIRED_L2_HIT                             {0x00, 0x42, 0x02, 0xd1}
-#define MEM_LOAD_RETIRED_L3_HIT                             {0x00, 0x42, 0x04, 0xd1}
-#define UOPS_ISSUED_ANY                                     {0x00, 0x42, 0x01, 0x0e}
-#define UOPS_RETIRED_ALL                                    {0x00, 0x42, 0x01, 0xc2}
-#define LDS_UOPS                                            {0x00, 0x42, 0x01, 0xa8}
-#define IDQ_MITE_UOPS                                       {0x00, 0x42, 0x04, 0x79}
-#define IDQ_DSB_UOPS                                        {0x00, 0x42, 0x08, 0x79}
-#define UOPS_EXECUTED_CORE                                  {0x00, 0x42, 0x02, 0xb1}
-#define UOPS_DISPATCHED_PORT_PORT_0                         {0x00, 0x42, 0x01, 0xa1}
-#define UOPS_DISPATCHED_PORT_PORT_1                         {0x00, 0x42, 0x02, 0xa1}
-#define UOPS_DISPATCHED_PORT_PORT_2                         {0x00, 0x42, 0x04, 0xa1}
-#define UOPS_DISPATCHED_PORT_PORT_3                         {0x00, 0x42, 0x08, 0xa1}
-#define UOPS_DISPATCHED_PORT_PORT_4                         {0x00, 0x42, 0x10, 0xa1}
-#define UOPS_DISPATCHED_PORT_PORT_5                         {0x00, 0x42, 0x20, 0xa1}
-#define UOPS_DISPATCHED_PORT_PORT_6                         {0x00, 0x42, 0x40, 0xa1}
-#define UOPS_DISPATCHED_PORT_PORT_7                         {0x00, 0x42, 0x80, 0xa1}
-#define FP_ARITH_INST_RETIRED_256B_PACKED_DOUBLE            {0x00, 0x42, 0x10, 0xc7}
-#define FP_ARITH_INST_RETIRED_256B_PACKED_SINGLE            {0x00, 0x42, 0x20, 0xc7}
-#define MEM_INST_RETIRED_ALL_LOADS                          {0x00, 0x42, 0x81, 0xd0}
-// Doesn't seem to work.
-#define UOPS_EXECUTED_PORT015                               {0x00, 0x42, 0x40, 0xb1}
-#define MACRO_INSTS_DECODED                                 {0x00, 0x42, 0x01, 0xaa}
-#define MACRO_INSTS_CISC_DECODED                            {0x00, 0x42, 0x08, 0xaa}
-#define BR_MISP_RETIRED_ALL_BRANCHES                        {0x00, 0x42, 0x04, 0xc5}
-#define BR_MISP_RETIRED_NEAR_CALL                           {0x00, 0x42, 0x02, 0xc5}
-#define BR_INST_RETIRED_ALL_BRANCHES                        {0x00, 0x42, 0x04, 0xc4}
-#define BR_INST_RETIRED_NEAR_CALL                           {0x00, 0x42, 0x04, 0xc4}
-#define BR_MISSP_EXEC                                       {0x00, 0x42, 0x00, 0x89}
-#define BR_RET_EXEC                                         {0x00, 0x42, 0x00, 0x8f}
-#define BOGUS_BR                                            {0x00, 0x42, 0x00, 0xe4}
-#define BTB_MISSES                                          {0x00, 0x42, 0x01, 0xe2}
-
-/* For older archs? .. */
-#define BPU_CLEARS_EARLY                                    {0x00, 0x42, 0x01, 0xe8}
-#define BPU_CLEARS_Late                                     {0x00, 0x42, 0x02, 0xe8}
-#define INT_MISC_RECOVERY_CYCLES                            {0x00, 0x42, 0x01, 0x0d}
-#define INT_MISC_CLEAR_RESTEER_CYCLES                       {0x00, 0x42, 0x80, 0x0d}
-#define BACLEARS_ANY                                        {0x00, 0x42, 0x01, 0xe6}
-/* Count # of mispredicted RET instructions */
-#define BR_RET_MISSP_EXEC                                   {0x00, 0x42, 0x00, 0x90}
-// Skylake, Kaby Lake, Coffee Lake only?
-#define ICACHE_64B_IFTAG_HIT                                {0x00, 0x42, 0x01, 0x83}
-#define ICACHE_64B_IFTAG_MISS                               {0x00, 0x42, 0x02, 0x83}
-
-
-//Additionally set MSR_PEBS_FRONTEND.EVTSEL=12H.
-#define FRONTEND_RETIRED_L1I_MISS                           {0x00, 0x42, 0x01, 0xc6}
-//Additionally set MSR_PEBS_FRONTEND.EVTSEL=13H.
-#define FRONTEND_RETIRED_L2I_MISS                           {0x00, 0x42, 0x01, 0xc6}
-
-#define NOT_USED
+#include "counter_events.h"
 
 /**************************************************************************************************
  **************************************************************************************************
@@ -132,6 +61,7 @@
 // LVT Performance Monitoring memory mapped addr
 #define LVT_PERFCON_MM_ADDR 0xFEE00340
 
+void *LVT_PERFCON_VA_ADDR = NULL;
 
 //===================================================================================================
 // Set up for different PMC ARCH Versions
@@ -144,7 +74,7 @@
 
 #define IA32_PERF_GLOBAL_OVF_RESET_ADDR                                 0x0390
 
-#elif defined(PMC_ARCH_V4)
+#elif defined(PMC_ARCH_V4) || defined(PMC_ARCH_V5)
 
 #define IA32_PERF_GLOBAL_STATUS_SET_ADDR                                0x0391
 
@@ -187,7 +117,7 @@ static int  my_nmi_handler(unsigned int cmd, struct pt_regs *regs){
   __asm__ __volatile__ ("rdmsr" : "=a"(mask_low), "=d"(mask_high) : "c"(IA32_PERF_GLOBAL_STATUS_ADDR));
   // Reset overflow status.
   __asm__ __volatile__ ("wrmsr" : : "c"(IA32_PERF_GLOBAL_OVF_RESET_ADDR), "a"(mask_low), "d"(0x00));
-#elif defined(PMC_ARCH_V4)
+#elif defined(PMC_ARCH_V4) || defined(PMC_ARCH_V5)
   // Reset overflow status.
 #if SUPPORTED_COUNTERS == 8
   __asm__ __volatile__ ("wrmsr" : : "c"(IA32_PERF_GLOBAL_STATUS_RESET_ADDR),
@@ -208,7 +138,7 @@ static int  my_nmi_handler(unsigned int cmd, struct pt_regs *regs){
 #ifdef X2APIC
   __asm__ __volatile__ ("wrmsr" : : "c"(LVT_PERFCON_ADDR), "a"(LVT_PERFCON), "d"(0x00));
 #else
-  // TODO
+  *((volatile uint32_t*)(LVT_PERFCON_VA_ADDR)) = LVT_PERFCON;
 #endif
   return NMI_HANDLED;
 }
@@ -221,7 +151,7 @@ static int  my_nmi_handler(unsigned int cmd, struct pt_regs *regs){
  */
 
 #define PROCFS_NAME          "pmc_pmi-data"
-#define PROCFS_MAX_SIZE ((TRIALS)*(NUM_CYCLES + MAX_PMC_SHIFT)*(NUM_COUNTERS) +  (EXTRA_HEADER_SPACE) )*(sizeof(int64_t))
+#define PROCFS_MAX_SIZE      ((TRIALS)*(NUM_CYCLES + MAX_PMC_SHIFT)*(NUM_COUNTERS) +  (EXTRA_HEADER_SPACE) )*(sizeof(int64_t))
 
 
 /**
@@ -265,11 +195,19 @@ out:
   return retval;
 }
 
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
 static struct file_operations myops = {
   .owner = THIS_MODULE,
   .read = myread,
   .write = mywrite,
+  };
+#else
+static struct proc_ops myops = {
+  .proc_read = myread,
+  .proc_write = mywrite
 };
+#endif
 
 
 /**************************************************************************************************
@@ -341,10 +279,43 @@ static inline void __attribute__((always_inline))invlpg(void* m){
 static inline void __attribute__((always_inline)) lots_of_nops(void){
   __asm__ __volatile__ (
     ".align 64\n\t"
-    ".rept 256 \n\t"
+    ".rept 512 \n\t"
     "nop\n\t"
     ".endr\n\t"
     );
+}
+
+/**
+ * Inserts sequence of mov dependency chains to try to fill RS
+ */
+static inline void __attribute__((always_inline)) dep_chain(void *list_ptr){
+    clflush(list_ptr);
+    __asm__ __volatile__(
+        "mov   (%0),  %%r13      \n\t"
+        ".rept        384        \n\t"
+        "mov   %%r13, %%r11      \n\t"
+        ".endr                   \n\t"
+        "lfence                  \n\t"
+        ::"r"(list_ptr):
+         "%r13", "%r11"
+        );
+}
+
+static inline void __attribute__((always_inline)) lots_of_port015(void) {
+  __asm__ __volatile__ (
+      ".rept 8192                         \n\t"
+      "aesenc   %%xmm4,  %%xmm5           \n\t"
+      "aesenc   %%xmm6,  %%xmm3           \n\t"
+      "popcnt   %%r11,   %%r12            \n\t"
+      "popcnt   %%r8,    %%r9             \n\t"
+      "vpermd   %%ymm3,  %%ymm4,  %%ymm5  \n\t"
+      "vpermd   %%ymm6,  %%ymm6,  %%ymm7  \n\t"
+      ".endr                              \n\t"
+      :::
+       "%r11", "%r12","%r8","%r9",
+       "%ymm0","%ymm1","%ymm2","%ymm3",
+       "%ymm4","%ymm5","%ymm6","%ymm7",
+       "%xmm3","%xmm4","%xmm5","%xmm6");
 }
 
 /***********************************************************************
@@ -378,12 +349,12 @@ static inline void __attribute__((always_inline)) lots_of_nops(void){
  */
 static inline void __attribute__((always_inline)) BPU_fill(void){
   int32_t i;
-  for(i = 0; i < 16; i++){
+  for(i = 0; i < 64; i++){
     __asm__ __volatile__ (
       ".align   4096             \n\t"
       "mov      $0x1,    %%al    \n\t"
       /* Number of branches to create */
-      ".rept    16384            \n\t"
+      ".rept    4096             \n\t"
       "test     %%al,    %%al    \n\t"
       ".intel_syntax             \n\t"
       ".align   2                \n\t"
@@ -396,8 +367,8 @@ static inline void __attribute__((always_inline)) BPU_fill(void){
   }
   return;
 }
-/** 
- * Similar version to above, but the spacing between jumps can 
+/**
+ * Similar version to above, but the spacing between jumps can
  * be varied.
  */
 static inline void __attribute__((always_inline)) BPU_fill_V2(void){

@@ -54,7 +54,9 @@ if x_max != 0:
             if y_max < max(PMC[i][1:x_max]):
                 y_max = max(PMC[i][1:x_max])
         plt.ylim([-0.1,y_max+5])
-
+if x_max == 0 and y_max != 0:
+    plt.ylim([-0.1,y_max])
+        
 plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.1)
 mng = plt.get_current_fig_manager()
 mng.resize(1080,1080)

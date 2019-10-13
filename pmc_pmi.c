@@ -7,32 +7,46 @@
 #include <linux/uaccess.h>
 #include <asm/nmi.h>
 #include <asm/fpu/api.h>
+#include <linux/version.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("B.S.");
 MODULE_DESCRIPTION("PMI Implementation");
 MODULE_VERSION("0.01");
 
-//#define X2APIC
+// Comment or un-comment depending on whether x2apic is enabled.
+#define X2APIC
 
+/**
+  * This value should be greater equal to maxium value of
+  * PMC_SHIFT. Needed in "defs_utils.h"
+  */
 #define MAX_PMC_SHIFT        20
 
-#define TRIALS               16384
-#define NUM_CYCLES           1000
+/* Number of trials to run per cycle */
+#define TRIALS               1024LL
+/* Number of cycles to measure data */
+#define NUM_CYCLES           200LL
 
-#define NUM_COUNTERS         3 //Should match num events in PMC_EVENT
+/**
+ * End trials if code being tested ends
+ * before NUM_CYCLES has been reached.
+ * Comment out if data upto NUM_CYCLES is needed
+ */
+#define QUICK_EXIT
+
+#define NUM_COUNTERS         2 //Should match num events in PMC_EVENT
 #define EXTRA_HEADER_SPACE   (4 + (NUM_COUNTERS/2) + 1)
 
 /* Contains PMC values and useful functions*/
 #include "defs_utils.h"
 
-/** 
- * Macros defined in header above, just add to list. 
+/**
+ * Macros defined in header above, just add to list.
  */
 static uint32_t PMC_EVENT[NUM_COUNTERS][4] = {
   INST_RETIRED_ANY_P,
-  UOPS_DISPATCHED_PORT_PORT_2,
-  UOPS_DISPATCHED_PORT_PORT_3
+  UOPS_ISSUED_ANY
 };
 
 /**
@@ -60,11 +74,12 @@ static uint32_t PMC[SUPPORTED_COUNTERS];
  *
  * Note: These values are probably very
  * dependendent on the hw config. Size of array should
- * be at least min(NUM_COUNTERS,SUPPORTED_COUNTERS) 
- * 
+ * be at least min(NUM_COUNTERS,SUPPORTED_COUNTERS)
+ *
  */
-static uint32_t PMC_SHIFTS[] = {0,6,0,0}; // Broadwell Machine
-//static uint32_t PMC_SHIFTS[] = {0,8,0,0}; // Coffelake Machine
+//static uint32_t PMC_SHIFTS[] = {0,6,0,0}; // Broadwell
+//static uint32_t PMC_SHIFTS[] = {0,8,0,0}; // Coffee Lake
+static uint32_t PMC_SHIFTS[] = {0,0,0,0}; // Ice Lake
 
 /**
  * Offset the pmc counter values. Use similar method as above
@@ -132,7 +147,7 @@ static int __init pmc_pmi_init(void) {
   data_log = (int64_t*)vmalloc(PROCFS_MAX_SIZE);
   if(!data_log){
     printk(KERN_INFO
-           "Allocation Error when trying to allocate %ld bytes.. exiting.\n", PROCFS_MAX_SIZE);
+           "Allocation Error when trying to allocate %lld bytes.. exiting.\n", PROCFS_MAX_SIZE);
     return 0;
   }
   int64_t *data_ptr = data_log + EXTRA_HEADER_SPACE;
@@ -191,6 +206,9 @@ static int __init pmc_pmi_init(void) {
    * TODO: Need to write directrly to MMIO VA FFEOXXXX, APIC addr, to
    * enable PMI.
    */
+  LVT_PERFCON_VA_ADDR = ioremap(LVT_PERFCON_MM_ADDR, 8);
+  *((volatile uint32_t*)(LVT_PERFCON_VA_ADDR)) = LVT_PERFCON;
+
 #endif
   register_nmi_handler(NMI_LOCAL, my_nmi_handler, 0, "pmi_handler");
 
@@ -202,7 +220,7 @@ static int __init pmc_pmi_init(void) {
   for(l = 0; l < NUM_COUNTERS; l += pmc_per_it){
 
     /**
-     * If NUM_COUNTERS > SUPPORTED_COUNTERS, we do multiple iterations 
+     * If NUM_COUNTERS > SUPPORTED_COUNTERS, we do multiple iterations
      * in groups of SUPPORTED_COUNTERS.
      */
     pmc_per_it = (SUPPORTED_COUNTERS < NUM_COUNTERS - l ) ? SUPPORTED_COUNTERS : NUM_COUNTERS - l;
@@ -211,7 +229,7 @@ static int __init pmc_pmi_init(void) {
     for(k = 0; k < pmc_per_it; k++){
       __asm__ __volatile__ ("wrmsr" : : "c"(PERFEVTSEL[k]), "a"(PMCX_EVENTS[k + l]), "d"(0x00));
 
-#if defined(PMC_ARCH_V4)
+#if defined(PMC_ARCH_V4) || defined(PMC_ARCH_V5)
       if(PMCX_EVENTS[k + l] == 0x004201c6) {
         // These are for the PEBS_FRONTEND events
         __asm__ __volatile__ ("wrmsr" : : "c"(MSR_PEBS_FRONTEND_ADDR), "a"(MSR_PEBS_FRONTEND_VAL), "d"(0x00));
@@ -273,14 +291,15 @@ static int __init pmc_pmi_init(void) {
         /* Flush L1 Data Cache (May not be supported on older arch) */
         //flush_l1d();
 
-        /* Insert lots of nops to RS */
+        /* Insert lots of nops to ROB */
         lots_of_nops();
+
 
         /**
          * Clear all caches:
          * Use only if needed. HUGE slowdown if used here.
          * Should lower NUM_TRIALS accordingly...
-         * Other options: invlpg or clflush 
+         * Other options: invlpg or clflush
          */
         //__asm__ __volatile__ ("wbinvd");
 
@@ -294,7 +313,6 @@ static int __init pmc_pmi_init(void) {
         //clcache_l1(scratch_space,0);
         //clflush(list_ptr);
         //clflush(&list_ptr);
-
 
 /*================================================================================================*/
 /*================================================================================================*/
@@ -311,9 +329,12 @@ static int __init pmc_pmi_init(void) {
 /*================================================================================================*/
 /*=================================== CODE TO TEST STARTS HERE ===================================*/
 /*================================================================================================*/
-        
-        var1 = list_ptr[0];
-        
+
+        __asm__ __volatile__(
+          "add $0x8, %rsp \n\t"
+          "sub $0x8, %rsp \n\t"
+          );
+
 /*================================================================================================*/
 /*=================================== CODE TO TEST ENDS HERE =====================================*/
 /*================================================================================================*/
@@ -324,7 +345,7 @@ static int __init pmc_pmi_init(void) {
          */
         __asm__ __volatile__ ("mfence");
         __asm__ __volatile__ ("lfence");
-        
+
         /*
          * Collect counter information, values should be
          * frozen globally and counter should be disabled.
@@ -361,16 +382,18 @@ static int __init pmc_pmi_init(void) {
 
         count_test = ((int64_t)test_low | (int64_t)test_high<<32);
 
-        /** 
-         * Check that we are not measuring code that is beyond what we want tested. 
+        /**
+         * Check that we are not measuring code that is beyond what we want tested.
          * There is probably a cleaner way to check, but this is good enough.
          */
+#if defined(QUICK_EXIT)
         if( count_test != count_res[0] ){
           if( j != NUM_CYCLES) data_log[0] = (j - 1) < data_log[0] ? j - 1 : data_log[0];
           i = TRIALS;
           j = NUM_CYCLES;
         }
-        else{
+        else
+#endif
           for(k = 0; k < pmc_per_it; k++){
             /*Make sure we are not writing past the array... just being more cautious.*/
             if(NUM_COUNTERS*TRIALS*( j + PMC_SHIFTS[k] )+NUM_COUNTERS*i + (k + l)
@@ -380,12 +403,10 @@ static int __init pmc_pmi_init(void) {
               if( PMC_SHIFTS[k] > 0 && j <= PMC_SHIFTS[k] )
                 data_ptr[NUM_COUNTERS*TRIALS*j+NUM_COUNTERS*i + (k + l)] = -1;
             }
-            else{
+            else
               printk(KERN_INFO "Potential out of bounds detected..\n");
-            }
           }
-        }
-        
+
       }
     }
   }
