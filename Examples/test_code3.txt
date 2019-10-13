@@ -1,0 +1,11 @@
+ 34c:	0f 30                	wrmsr  
+ 34e:	48 83 ec 08          	sub    $0x8,%rsp
+ 352:	48 c7 04 24 00 00 00 	movq   $0x0,(%rsp)
+ 359:	00 
+ 35a:	48 83 c4 08          	add    $0x8,%rsp
+ 35e:	48 83 ec 08          	sub    $0x8,%rsp
+ 362:	48 c7 04 24 00 00 00 	movq   $0x0,(%rsp)
+ 369:	00 
+ 36a:	48 83 c4 08          	add    $0x8,%rsp
+ 36e:	0f ae f0             	mfence 
+ 371:	0f ae e8             	lfence 

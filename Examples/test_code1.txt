@@ -1,0 +1,7 @@
+ 38d:	0f 30                	wrmsr  
+ 38f:	48 83 c4 08          	add    $0x8,%rsp
+ 393:	48 83 ec 08          	sub    $0x8,%rsp
+ 397:	48 83 c4 08          	add    $0x8,%rsp
+ 39b:	48 83 ec 08          	sub    $0x8,%rsp
+ 39f:	0f ae f0             	mfence 
+ 3a2:	0f ae e8             	lfence 

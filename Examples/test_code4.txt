@@ -1,0 +1,5 @@
+ 38d:	0f 30                	wrmsr  
+ 38f:	41 8b 04 24          	mov    (%r12),%eax
+ 393:	89 44 24 24          	mov    %eax,0x24(%rsp)
+ 397:	0f ae f0             	mfence 
+ 39a:	0f ae e8             	lfence 

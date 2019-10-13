@@ -1,0 +1,6 @@
+ 34d:	0f 30                	wrmsr  
+ 34f:	c4 e2 75 b8 d0       	vfmadd231ps %ymm0,%ymm1,%ymm2
+ 354:	c4 e2 5d b8 eb       	vfmadd231ps %ymm3,%ymm4,%ymm5
+ 359:	c4 e2 45 b8 d6       	vfmadd231ps %ymm6,%ymm7,%ymm2
+ 35e:	0f ae f0             	mfence 
+ 361:	0f ae e8             	lfence 
