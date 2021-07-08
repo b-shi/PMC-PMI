@@ -35,6 +35,15 @@ MODULE_VERSION("0.01");
  */
 #define QUICK_EXIT
 
+/**
+ * Number of supported counters to use. Useful when we
+ * want to use only a subset of the supported counters.
+ * Also useful when we want to use the same counter for
+ * all events.
+ * 1 <= SUPPORTED_COUNTERS_TO_USE <= SUPPORTED_COUNTERS
+ */
+#define SUPPORTED_COUNTERS_TO_USE  SUPPORTED_COUNTERS
+
 #define NUM_COUNTERS         2 //Should match num events in PMC_EVENT
 #define EXTRA_HEADER_SPACE   (4 + (NUM_COUNTERS/2) + 1)
 
@@ -59,11 +68,11 @@ static uint32_t PMCX_EVENTS[NUM_COUNTERS];
  * PERFEVTSEL: addr where wrmsr writes to.
  * PMC: addr where rdmsr reads data from.
  */
-static uint32_t PERFEVTSEL[SUPPORTED_COUNTERS];
-static uint32_t PMC[SUPPORTED_COUNTERS];
+static uint32_t PERFEVTSEL[SUPPORTED_COUNTERS_TO_USE];
+static uint32_t PMC[SUPPORTED_COUNTERS_TO_USE];
 
 /**
- * Some of the pmc do not count do not refer to the
+ * Some of the pmc counts do not refer to the
  * current cycle. This is to compensate for that by
  * shifting the pmc count at cycle=I to
  * cycle=I + PMC_SHIFTS[].
@@ -72,14 +81,14 @@ static uint32_t PMC[SUPPORTED_COUNTERS];
  * multiple counters with the same event and
  * make sure their values align each cycle.
  *
- * Note: These values are probably very
- * dependendent on the hw config. Size of array should
- * be at least min(NUM_COUNTERS,SUPPORTED_COUNTERS)
+ * Note: These values are very
+ * dependendent on the hw config and possibly the event being counted.
+ * Size of array should be at least min(NUM_COUNTERS,SUPPORTED_COUNTERS)
  *
  */
 //static uint32_t PMC_SHIFTS[] = {0,6,0,0}; // Broadwell
 //static uint32_t PMC_SHIFTS[] = {0,8,0,0}; // Coffee Lake
-static uint32_t PMC_SHIFTS[] = {0,0,0,0}; // Ice Lake
+static uint32_t PMC_SHIFTS[] = {0,0,0,0}; // Ice Lake, Tiger Lake
 
 /**
  * Offset the pmc counter values. Use similar method as above
@@ -118,7 +127,7 @@ static int __init pmc_pmi_init(void) {
   int i,j,k,l;
   unsigned long flags;
   /* Collecting counter data in groups of pmc_per_it*/
-  int pmc_per_it = (SUPPORTED_COUNTERS < NUM_COUNTERS ) ? SUPPORTED_COUNTERS : NUM_COUNTERS;
+  int pmc_per_it = (SUPPORTED_COUNTERS_TO_USE < NUM_COUNTERS ) ? SUPPORTED_COUNTERS_TO_USE : NUM_COUNTERS;
 
   /**
    * Init all counter addresses, event selector and temp variables.
@@ -134,8 +143,8 @@ static int __init pmc_pmi_init(void) {
       (PMC_EVENT[i][0]<<24)|(PMC_EVENT[i][1]<<16)|(PMC_EVENT[i][2]<<8)|(PMC_EVENT[i][3]);
   }
 
-  uint32_t rdmsr_lohi[SUPPORTED_COUNTERS][2]; // {low, high}
-  int64_t count_res[SUPPORTED_COUNTERS];
+  uint32_t rdmsr_lohi[SUPPORTED_COUNTERS_TO_USE][2]; // {low, high}
+  int64_t count_res[SUPPORTED_COUNTERS_TO_USE];
 
   uint32_t test_low,test_high;
   int64_t count_test;
@@ -220,10 +229,10 @@ static int __init pmc_pmi_init(void) {
   for(l = 0; l < NUM_COUNTERS; l += pmc_per_it){
 
     /**
-     * If NUM_COUNTERS > SUPPORTED_COUNTERS, we do multiple iterations
-     * in groups of SUPPORTED_COUNTERS.
+     * If NUM_COUNTERS > SUPPORTED_COUNTERS_TO_USE, we do multiple iterations
+     * in groups of SUPPORTED_COUNTERS_TO_USE.
      */
-    pmc_per_it = (SUPPORTED_COUNTERS < NUM_COUNTERS - l ) ? SUPPORTED_COUNTERS : NUM_COUNTERS - l;
+    pmc_per_it = (SUPPORTED_COUNTERS_TO_USE < NUM_COUNTERS - l ) ? SUPPORTED_COUNTERS_TO_USE : NUM_COUNTERS - l;
 
     /* Program each performance counter with the specified selector*/
     for(k = 0; k < pmc_per_it; k++){

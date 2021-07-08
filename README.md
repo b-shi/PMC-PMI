@@ -7,6 +7,7 @@ PMC-PMI is a linux kernel module which uses performance monitoring interrupts(PM
 ## Initial Configuration
 Before running the kernel it is recommended to do the following:
 * Disable Hyper-Threading in BIOS or possibly via kernel boot parameter
+* Disable kernel lockdown (one way is by disabling secure boot in BIOS)
 * Using the kernel boot parameter "isolcpus" to isolate cpus you plan to run the module on
 * Root access (physical access to machine would be good as well)
 
@@ -14,7 +15,7 @@ Before running the kernel it is recommended to do the following:
 To build the kernel module run
 
 ```shell
-git clone https://github.com/bsghost/PMC-PMI.git
+git clone https://github.com/b-shi/PMC-PMI.git
 cd PMC-PMI && make
 ```
 
@@ -124,11 +125,15 @@ A few sample plots and associated test codes are included in the Examples direct
 
 ##  Support/Limitations
 * Intel CPU only
-    * AMD CPU support would be awesome.
+    * AMD CPU support probably not possible.
 * APIC base register is hard coded for now. 
 * The LKM tries to support performance monitoring arch 3,4 (and 5?)
     * These were the only machines I had access to.
-* Tested on a Ubuntu 18.XX, on a broadwell and coffee lake machine.
+* Tested on Ubuntu 18.XX and 21.04.
+* Tested with following:
+    * Broadwell
+    * Coffee Lake
+    * Ice Lake
 * Expect code which makes accesses in L3/Memory to have very noisy data.
 * Expect code with lots of branches to be have noisy data. 
     * Some arch msr can be used to reduce the noise, but not entirely.
